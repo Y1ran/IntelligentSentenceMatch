@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\dataset",
+    "\\merge_sgns_bigram_char300.txt",
+    "\\process"
+  ],
+  "SelectedNode": "\\Word2VecMatch.py",
+  "PreviewInSolutionExplorer": false
+}
