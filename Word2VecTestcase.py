@@ -1,83 +1,173 @@
 # coding=GBK
 
-import sys
-import csv
+from pyhanlp import *
 import traceback
 import warnings
 import numpy as np
+warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
+import logging
 from gensim.models import KeyedVectors
+from scipy import spatial
 from flask import Flask
-from pandas.core.frame import DataFrame
-import pandas as pd
+import sys
 
-from Word2VecEmbedding import *
+app = Flask(__name__)
+
+model=None
 
 def load_model():
     #加载模型到内存中
     global model
     model = KeyedVectors.load_word2vec_format('pretrainModel\\pretrain_word2vec_modelV1.vector', binary=False) 
 
-def preprocessDataframe(df, mode=True):
-    #处理dataframe抽取问题
-    questionList = df['knowledge'].values.tolist()
-    answerList = df['Answer'].values.tolist()
-    qaDict = dict(zip(questionList, answerList))
-    if mode:
-        print("问题列表输出:",qaDict)
+class Word2VecTester():
 
-    return qaDict
+    def __init__(self):
+        model = Word2Vec(sentences, sg=1, size=100, window=5, min_count=5, negative=3, sample=0.001, hs=1, workers=4)
 
-if __name__ == "__main__":
+    def filtered_punctuations(self, token_list):
+        try:
+            punctuations = ['']
+            token_list_without_punctuations = [word for word in token_list
+                                                             if word not in punctuations]
+            #print "[INFO]: filtered_punctuations is finished!"
+            return token_list_without_punctuations
 
-    tmp_lst = []
-    with open('测试数据v2.csv', 'r') as fh:
-        reader = csv.reader(fh)
-        for row in reader:
-            tmp_lst.append(row)
-    df = pd.DataFrame(tmp_lst[1:], columns=tmp_lst[0]) 
-    #df_simsplit = df['similarQuestion'].str.split('\n', expand=True)
-    print("测试用例读取数据： \n")
-    print(df)
+        except Exception as e:
+            print (traceback.print_exc())
 
-    emb_dict = preprocessDataframe(df)
 
-    print(("* Loading Keras model and Flask starting server..."
-    "please wait until server has fully started"))
-    load_model()
-    #app.run()
+    def list_crea(self, everyone):
+        list_word = []
+        for k in everyone:
+            fenci= filtered_punctuations(k)
+            list_word.append(fenci)
+
+        return list_word
+
+class keywordMatchScore():
+
+    def __init__(self):
+        self.listpath = None
+        self.sentence = None
+
+    # 创建停用词列表
+    def stopwordslist(self,listpath):
+	    stopwords = [line.strip() for line in open(listpath, encoding='GBK').readlines()]
+	    return stopwords
+
+
+    # 对句子进行分词
+    def seg_sentence(self,sentence):
+        sentence_seged = HanLP.segment(sentence.strip())
+        stopwords = self.stopwordslist('stopwords.txt')  # 这里加载停用词的路径
+        outstr = ''
+        print("hanlp outputs: ", sentence_seged)
+        for word in sentence_seged:
+            if word.word not in stopwords:
+                if word != '\t':
+                    outstr += word.word
+                    outstr += " "
+        return outstr
+
+    # 计算关键词匹配得分
+    def score_compute(self, inputs1, inputs2):
+        score = len(inputs1.intersection(inputs2)) / max(len(inputs1), len(inputs2)) 
+
+        return score
+
+
+
+def simlarityCalu(vector1,vector2):
+    #计算余弦相似度
+    vector1Mod = np.sqrt(vector1.dot(vector1))
+    vector2Mod = np.sqrt(vector2.dot(vector2))
+
+    if vector2Mod!=0 and vector1Mod!=0:
+        simlarity=(vector1.dot(vector2))/(vector1Mod*vector2Mod)
+    else:
+        simlarity=0
+    return simlarity
+
+if __name__ == '__main__':
+
     scoreMatcher = keywordMatchScore()
-    inputs = open('knowledge\\test_input.txt', 'r') #加载要处理的文件的路径
-    outputs = open('test_output.txt', 'w') #加载处理后的文件路径
-    line_keys = []
-    line_values = []
-    embeddings_index = {}
-
-    for line in emb_dict.keys():
-        print("关键词：", HanLP.extractKeyword(line, 4))
-        # 自动摘要
-        print("摘要句：", HanLP.extractSummary(line, 2))
-        line_seg = scoreMatcher.seg_sentence(line).strip()  # 这里的返回值是字符串
-        line_keys.append(line_seg.split(' '))
-        line_values.append(emb_dict[line])
-        print("line_outputs: ", (line_keys, line_values))
+    #app.run()
+    knowledgeBase = {}
+    embeddings = 'knowledge\\test_embedding.txt' #加载知识库向量存储的文件路径
+    with open(embeddings, 'r') as file_object:
+        for line in file_object:
+            qa_pair = '\t'.join([line.split('\t')[0],line.split('\t')[1]])
+            knowledgeBase[qa_pair] = line.split('\t')[2].split(',')
+            print('model input embedding: ', line)
+            print('qa_pair is: ', qa_pair)
     
 
-    emb_output = []
-    cos_output = []
-    for sentence in line_keys:
-        avg_vec = []
-        for token in sentence:
-            #print("word ", token, "with embedding vector: ", model[token])#, embeddings_index[word])
-            avg_vec.append(model[token])
-        avg_embedding_test = np.mean(avg_vec,axis=0)
-        print("average embedding: ", avg_embedding_test)
-        cos_output.append(''.join(sentence))
-        emb_output.append(avg_embedding_test)
-
     #index2word_set = set(model.wv.index2word)
-    embeddings = 'knowledge\\test_embedding.txt' #加载知识库向量存储的文件路径
-    with open(embeddings, 'w') as file_object:
-        for question, answer,embedding in line_keys, line_values, emb_output:
-            file_object.write(question + '\t'+ answer + '\t' +  ','.join([str(x) for x in embedding]))
 
-    print("完成预训练向量的加载")
+    #s1_afv = avg_feature_vector(line_outputs[0], model=model, num_features=300, index2word_set=index2word_set)
+    #s2_afv = avg_feature_vector(line_outputs[1], model=model, num_features=300, index2word_set=index2word_set)
+    #sim = 1 - spatial.distance.cosine(s1_afv, s2_afv)
+
+    inputs = sys.argv[1]
+
+    line_seg = scoreMatcher.seg_sentence(inputs).strip()  # 这里的返回值是字符串
+    line_inputs = line_seg.split(' ')
+    print("line_inputs: ", line_inputs)
+    inputs = [inputs]
+    for line in inputs:
+        # print("关键词：", HanLP.extractKeyword(line, 4))
+        # 自动摘要
+        # print("摘要句：", HanLP.extractSummary(line, 2))
+        line_seg = scoreMatcher.seg_sentence(line).strip()  # 这里的返回值是字符串
+        print("分词后的句子为：", line_seg)
+
+        
+    print(("* Loading Keras model and Flask starting server..."
+        "please wait until server has fully started"))
+    load_model()
+
+    sin_output = []
+    avg_vec = []
+    rankList = []
+    rankDict = {}
+    for token in line_inputs:
+        #print("word ", token, "with embedding vector: ", model[token])#, embeddings_index[word])
+        avg_vec.append(model[token])
+    sin_output = np.mean(avg_vec,axis=0)
+
+    
+    for sentence, embedding in knowledgeBase.items():
+        trans_emb = np.array(embedding, dtype=np.float)
+        sim_score = simlarityCalu(sin_output, trans_emb)
+        rankList.append(sim_score)
+        print("cos outputs: ",sentence.split('\t')[1],' with ', sim_score)
+        rankDict[sentence] = sim_score
+    # print("ranked list: ", sorted(rankDict.items()))
+
+    def sorted_dict(container, keys, reverse):
+         """返回 keys 的列表,根据container中对应的值排序"""
+         aux = [ (container[k], k) for k in keys]
+         aux.sort()
+         if reverse: aux.reverse()
+         return [(k, v) for v, k in aux]
+    print("\n")
+    order = 0
+
+    for seg in sorted_dict(rankDict,rankDict.keys(),True):
+        print("匹配到最可能的Top%d 问题为"% order,seg[0].split('\t')[0]
+        , "答案: ", seg[0].split('\t')[1], " 概率：", order,seg[1])
+        order += 1
+
+   # model = gensim.models.Word2Vec.load('D:\BaiduNetdiskDownload\sgns.weibo.word\sgns.weibo.word')
+    # 主程序
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    #sentences = word2vec.Text8Corpus("D:\wiki\11.txt")  
+    n_dim=300
+     # 训练skip-gram模型; 
+    #model = word2vec.Word2Vec(sentences, size=n_dim, min_count=5,sg=1) 
+    # 计算两个词的相似度/相关程度
+    print("y1")
+    print("--------")
+    # 寻找对应关系
+

@@ -14,8 +14,8 @@ model=None
 def load_model():
     #加载模型到内存中
     global model
-    model = KeyedVectors.load_word2vec_format('merge_sgns_bigram_char300.txt', binary=False) 
-    model.wv.save("pretrianModel\\pretrain_word2vec_modelV1.wv")
+    model = KeyedVectors.load_word2vec_format('pretrainModel\\merge_sgns_bigram_char300.txt', binary=False) 
+    model.wv.save_word2vec_format("pretrainModel\\pretrain_word2vec_modelV1.vector")
 
 if __name__ == "__main__":
     load_model()

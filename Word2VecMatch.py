@@ -18,7 +18,7 @@ model=None
 def load_model():
     #加载模型到内存中
     global model
-    model = KeyedVectors.load_word2vec_format('pretrainModel\\pretrain_word2vec_modelV1.wv', binary=True) 
+    model = KeyedVectors.load_word2vec_format('pretrainModel\\pretrain_word2vec_modelV1.vector', binary=False) 
 
 class Word2VecTester():
 

@@ -18,7 +18,7 @@ model=None
 def load_model():
     #加载模型到内存中
     global model
-    model = KeyedVectors.load_word2vec_format('pretrainModel\\pretrain_word2vec_modelV1.bin', binary=True) 
+    model = KeyedVectors.load_word2vec_format('pretrainModel\\pretrain_word2vec_modelV1.vector', binary=False) 
 
 class Word2VecTester():
 
@@ -64,7 +64,7 @@ class keywordMatchScore():
         outstr = ''
         print("hanlp outputs: ", sentence_seged)
         for word in sentence_seged:
-            if word not in stopwords:
+            if word.word not in stopwords:
                 if word != '\t':
                     outstr += word.word
                     outstr += " "
@@ -129,6 +129,7 @@ if __name__ == '__main__':
     embeddings = 'knowledge\\test_embedding.txt' #加载知识库向量存储的文件路径
     with open(embeddings, 'w') as file_object:
         for k,v in cos_input.items():
-            file_object.write(k + ':'+ ','.join([str(x) for x in v])+'\n')
+            file_object.write(k + '\t'+ ','.join([str(x) for x in v])+'\t'
+            + k对应的答案)
 
     print("完成预训练向量的加载")
