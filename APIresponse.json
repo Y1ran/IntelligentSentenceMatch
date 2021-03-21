@@ -1,0 +1,66 @@
+bot_session:
+{
+"dialog_state":
+	{
+		"contexts":
+		{
+			"SYS_CHAT_HIST":[],
+			"SYS_PRESUMED_HIST":["你是谁","我是你的小可爱啊,你忘了吗"]
+		}
+	},
+"interactions":[
+	{
+		"interaction_id":"interaction-1616339687627-2911475556-8991-8789",
+		"request":
+		{
+			"bernard_level":1,
+			"client_session":"{\"client_results\":\"\", \"candidate_options\": []}",
+			"hyper_params":{"chat_service_type":2},
+			"query":"你是谁",
+			"query_info":{"asr_candidates":[],
+			"source":"KEYBOARD",
+			"type":"TEXT"},
+			"updates":"",
+			"user_id":"4a0b77ceeb674b0e829a622038d8d842"},
+			"response":
+			{
+				"action_list":[
+				{
+					"action_id":"chat_satisfy",
+					"confidence":-1.074039101600647,
+					"custom_reply":"",
+					"refine_detail":{},
+					"say":"我 是你的小可爱啊,你忘了吗",
+					"type":"chat"
+				},
+				{
+					"action_id":"chat_satisfy",
+					"confidence":-1.225696086883545,
+					"custom_reply":"",
+					"refine_detail":{},
+					"say":"我是一个喜欢你的人",
+					"type":"chat"
+				},
+				{
+					"action_id":"chat_satisfy",
+					"confidence":-1.343409657478333,
+					"custom_reply":"",
+					"refine_detail":{},
+					"say":"我是你的小可爱呀",
+					"type":"chat"
+				}
+				],
+				
+				"msg":"ok",
+				"qu_res":{},
+				"schema":
+				{
+					"intent":"BUILT_CHAT",
+					"intent_confidence":1.0
+				},
+				"status":0
+			},
+			"timestamp":"2021-03-21 23:14:47.627"
+		}
+	],
+"session_id":"session-1616339686920-115020198-8013-6700"}
