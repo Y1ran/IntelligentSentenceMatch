@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
 import requests
-import os 
-import sys
+import os
 
 class UNIT:
     def __init__(self, api_key, api_secret):
@@ -19,54 +18,44 @@ class UNIT:
         response = requests.post(host)
         if response:
             self.access_token = response.json()['access_token']
-            print("access_token successe")
+            print("access_token响应请求成功，请输入对话：")
         else:
-            print("access_token failed")
+            print("access_token响应请求失败，请排查原因")
 
-    def query(self, bot_session, query_text, app_id):
-        self.url = 'https://aip.baidubce.com/rpc/2.0/unit/bot/chat?access_token=' + self.access_token
-        post_data = """{   
-                    "bot_session": "%s",
+    def query(self, query_text, app_id):
+        self.url = 'https://aip.baidubce.com/rpc/2.0/unit/service/chat?access_token=' + self.access_token
+        post_data = """{
+                    "bot_session": "",
                     "log_id": "7758521",
-                    "service_id": "%s",	
+                    "service_id": "%s",	# 你的聊天机器人的ID
                     "request": {
                         "bernard_level": 1,
                         "client_session": "{\\\"client_results\\\":\\\"\\\", \\\"candidate_options\\\": []}",
-                        "query": "%s",	
+                        "query": "%s",	# 要查询的文字
                         "query_info": {
                             "asr_candidates": [],
                             "source": "KEYBOARD",
                             "type": "TEXT"
                         },
                         "updates": "",
-                        "user_id": "4a0b77ceeb674b0e829a622038d8d842"
+                        "user_id": "8888"
                     },
-                    "bot_id":"1086918",
+                    "session_id": "",
                     "version": "2.0"
-                }""" % (bot_session, app_id, query_text)
+                }""" % (app_id, query_text)
         post_data = post_data.encode('utf-8')
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         response = requests.post(self.url, data=post_data, headers=headers)
         if response:
-            return response.json()#['result']['response']['action_list'][0]['say']
+            return response.json()['result']['response_list'][0]['action_list'][0]['say']
 
 if __name__ == "__main__":
-    print("chating mode loading...")
-    app_id = "1086918"
-    inputs = sys.argv[0]
+    print("正在接入闲聊模式，请等待AI上线...")
+    app_id = "23815184"
+    # 1086918
+    # 23815184
+    inputs = sys.argv[1]
+
     api_key = "SVy07kGrs4h7zCtkVrPOB6wZ"
     api_secret = "TpFxIA0hmLcDqlYNuXjZfBqGi9HxaVvk"
-    session_id = ""
-    step = 1
     chatBot = UNIT(api_key, api_secret)
-    while True:
-        print("round %d" % step)
-        inputs = input("your question: ")
-        #print("step %d: with %s, %s, %s" % (step,session_id, inputs, app_id))
-        response = chatBot.query(session_id, inputs, app_id)
-        session_id = response['result']['bot_session'].split(",")[-1].split(":")[1].split("}")[0].split("\"")[1]#['session_id']
-        session_id = "{\\\"session_id\\\":\\\"%s\\\"}" % session_id
-        print("bot_session:", session_id)
-        print("respons: \n ", response['result']['response']['action_list'][0]['say'])
-
-        step += 1
